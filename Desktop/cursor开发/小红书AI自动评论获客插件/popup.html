@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>小红书自动点赞</title>
+    <style>
+        body {
+            width: 300px;
+            padding: 15px;
+            font-family: Arial, sans-serif;
+
+            background: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .tab-container {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 15px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .tab.active {
+            color: #4CAF50;
+            border-bottom: 2px solid #4CAF50;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        input[type="text"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        #startBtn {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        #stopBtn {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            background-color: #f5f5f5;
+        }
+
+        .test-mode {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .test-mode label {
+            font-weight: normal;
+        }
+
+        .section-title {
+            margin-top: 15px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #333;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+            transition: all 0.3s ease;
+        }
+
+        .section-title:hover {
+            color: #4CAF50;
+        }
+
+        .section-title::after {
+            content: '▼';
+            font-size: 12px;
+            transition: transform 0.3s;
+            color: #666;
+        }
+
+        .section-title.collapsed::after {
+            transform: rotate(-90deg);
+        }
+
+        .collapsible-content {
+            display: block;
+            transition: all 0.3s ease;
+            overflow: hidden;
+            max-height: 1000px;
+        }
+
+        .collapsible-content.collapsed {
+            max-height: 0;
+            margin: 0;
+            padding: 0;
+            opacity: 0;
+        }
+
+        .range-inputs {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .range-inputs input {
+            width: 80px;
+        }
+
+        .keyword-history {
+            margin-top: 5px;
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .keyword-history.active {
+            display: block;
+        }
+
+        .keyword-history-item {
+            padding: 8px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+
+        .keyword-history-item:last-child {
+            border-bottom: none;
+        }
+
+        .keyword-history-item:hover {
+            background-color: #f5f5f5;
+        }
+
+        .keyword-container {
+            position: relative;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="input-group">
+            <label for="keyword">贴子关键词：</label>
+            <div class="keyword-container">
+                <input type="text" id="keyword" placeholder="输入搜索关键词">
+                <div id="keywordHistory" class="keyword-history">
+                    <!-- 历史关键词将通过JavaScript动态添加 -->
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title" data-section="timeSettings">时间间隔设置</div>
+        <div class="collapsible-content" id="timeSettings">
+            <div class="input-group">
+                <label>点赞间隔(ms)：</label>
+                <div class="range-inputs">
+                    <input type="number" id="likeIntervalMin" value="1000" min="500" placeholder="最小值">
+                    <span>-</span>
+                    <input type="number" id="likeIntervalMax" value="2000" min="500" placeholder="最大值">
+                </div>
+            </div>
+            <div class="input-group">
+                <label>帖子间隔(ms)：</label>
+                <div class="range-inputs">
+                    <input type="number" id="postIntervalMin" value="5000" min="1000" placeholder="最小值">
+                    <span>-</span>
+                    <input type="number" id="postIntervalMax" value="8000" min="1000" placeholder="最大值">
+                </div>
+            </div>
+            <div class="input-group">
+                <label>页面加载等待(ms)：</label>
+                <div class="range-inputs">
+                    <input type="number" id="pageLoadWaitMin" value="3000" min="1000" placeholder="最小值">
+                    <span>-</span>
+                    <input type="number" id="pageLoadWaitMax" value="5000" min="1000" placeholder="最大值">
+                </div>
+            </div>
+            <div class="input-group">
+                <label>评论加载等待(ms)：</label>
+                <div class="range-inputs">
+                    <input type="number" id="commentLoadWaitMin" value="3000" min="1000" placeholder="最小值">
+                    <span>-</span>
+                    <input type="number" id="commentLoadWaitMax" value="5000" min="1000" placeholder="最大值">
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title" data-section="limitSettings">限制设置</div>
+        <div class="collapsible-content" id="limitSettings">
+            <div class="input-group">
+                <label for="maxPosts">最多处理帖子数：</label>
+                <input type="number" id="maxPosts" value="0" min="0" placeholder="0表示不限制">
+            </div>
+            <div class="input-group">
+                <label for="maxLikes">最多点赞总数：</label>
+                <input type="number" id="maxLikes" value="0" min="0" placeholder="0表示不限制">
+            </div>
+            <div class="input-group">
+                <label for="maxLikesPerPost">单个帖子最多点赞数：</label>
+                <input type="number" id="maxLikesPerPost" value="0" min="0" placeholder="0表示不限制">
+            </div>
+        </div>
+
+        <div class="tab-container">
+            <button class="tab active" data-tab="like">点赞设置</button>
+            <button class="tab" data-tab="comment">评论设置</button>
+        </div>
+
+        <!-- 点赞设置标签页 -->
+        <div id="like-tab" class="tab-content active">
+            <div class="test-mode">
+                <input type="checkbox" id="testMode" class="config-input" data-config="isTestMode">
+                <label for="testMode">测试模式(不进行点赞操作)</label>
+            </div>
+
+            <div class="section-title" data-section="filterSettings">评论过滤设置(默认跳过作者)</div>
+            <div class="collapsible-content" id="filterSettings">
+                <div class="input-group">
+                    <label for="commentKeywords">评论关键词（用逗号分隔）：</label>
+                    <input type="text" id="commentKeywords" class="config-input" data-config="commentKeywords"
+                        placeholder="输入关键词，多个用逗号分隔">
+                </div>
+                <div class="test-mode">
+                    <input type="checkbox" id="requireImage" class="config-input" data-config="requireImage">
+                    <label for="requireImage">仅处理带图片的评论</label>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button id="likeStartBtn">开始点赞</button>
+                <button id="likeStopBtn">停止</button>
+                <button id="likeCurrentBtn">点赞当前贴子</button>
+            </div>
+        </div>
+
+        <!-- 评论设置标签页 -->
+        <div id="comment-tab" class="tab-content">
+            <div class="test-mode">
+                <input type="checkbox" id="testModeComment" class="config-input" data-config="testModeComment">
+                <label for="testModeComment">测试模式（勾选则不进行评论操作）</label>
+            </div>
+
+            <div class="input-group">
+                <label>评论模式：</label>
+                <select id="commentMode" class="config-input" data-config="commentMode"
+                    style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; width: 100%;">
+                    <option value="random">随机评论</option>
+                    <option value="ai">AI评论</option>
+                </select>
+            </div>
+
+            <!-- AI模型配置部分 -->
+            <div id="aiConfig" class="section-title" data-section="aiConfig" style="display: none;">AI模型配置</div>
+            <div id="aiConfigContent" class="collapsible-content" style="display: none;">
+                <div class="input-group">
+                    <label>AI模型：</label>
+                    <select id="aiModel" class="config-input" data-config="aiModel"
+                        style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; width: 100%;">
+                        <option value="deepseek">DeepSeek</option>
+                        <option value="gpt">GPT</option>
+                        <option value="claude">Claude</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="apiKey">API密钥：</label>
+                    <input type="password" id="apiKey" class="config-input" data-config="apiKey"
+                        style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; width: 100%;"
+                        placeholder="输入API密钥">
+                </div>
+                <div class="input-group">
+                    <label for="aiPrompt">AI提示词：</label>
+                    <textarea id="aiPrompt" class="config-input" data-config="aiPrompt" rows="3"
+                        style="padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;"
+                        placeholder="输入AI提示词模板，可以使用 {title} 和 {content} 作为占位符">请根据这篇笔记的内容，生成一条合适的评论。笔记标题：{title}，内容：{content}</textarea>
+                </div>
+            </div>
+
+            <!-- 自定义评论内容部分 -->
+            <div id="customCommentsSection" class="input-group">
+                <label for="customComments">自定义评论内容（每行一条）：</label>
+                <textarea id="customComments" class="config-input" data-config="randomComments" rows="4"
+                    style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; resize: vertical; white-space: pre-wrap; word-wrap: break-word;"
+                    placeholder="输入自定义评论内容，每行一条">写得真好，感谢分享！
+学到了，谢谢分享经验
+这个建议很实用，收藏了
+分析得很到位，支持一下
+内容很有价值，期待更多分享</textarea>
+            </div>
+            <div class="button-group">
+                <button id="commentStartBtn">开始评论</button>
+                <button id="commentStopBtn">停止</button>
+                <button id="commentCurrentBtn">评论当前贴子</button>
+            </div>
+        </div>
+
+        <div class="button-group" style="margin-top: 15px;">
+            <button id="viewRecordsBtn" style="background-color: #2196F3; color: white;">查看历史记录</button>
+        </div>
+
+        <div class="status" id="status">就绪</div>
+    </div>
+    <script src="popup-utils.js" type="module"></script>
+    <script src="popup-handlers.js" type="module"></script>
+    <script src="popup.js" type="module"></script>
+</body>
+
+</html>

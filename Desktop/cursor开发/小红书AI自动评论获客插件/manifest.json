@@ -1,0 +1,66 @@
+{
+    "manifest_version": 3,
+    "name": "小红书助手",
+    "version": "1.0.0",
+    "description": "小红书自动点赞评论助手",
+    "permissions": [
+        "storage",
+        "tabs",
+        "activeTab",
+        "scripting"
+    ],
+    "host_permissions": [
+        "*://*.xiaohongshu.com/*"
+    ],
+    "action": {
+        "default_popup": "popup.html",
+        "default_icon": {
+            "16": "images/icon16-red.png",
+            "48": "images/icon48-red.png",
+            "128": "images/icon128-red.png"
+        }
+    },
+    "icons": {
+        "16": "images/icon16-red.png",
+        "48": "images/icon48-red.png",
+        "128": "images/icon128-red.png"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "*://*.xiaohongshu.com/*"
+            ],
+            "js": [
+                "content.js"
+            ],
+            "run_at": "document_idle"
+        }
+    ],
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "popup-utils.js",
+                "popup-handlers.js",
+                "popup.js",
+                "popup-config.js",
+                "comment.js",
+                "config.js",
+                "utils.js",
+                "post.js",
+                "records.js",
+                "records-ui.js",
+                "records.html",
+                "ai-comment.js"
+            ],
+            "matches": [
+                "<all_urls>"
+            ]
+        }
+    ],
+    "background": {
+        "service_worker": "background.js"
+    },
+    "content_security_policy": {
+        "extension_pages": "script-src 'self'; object-src 'self'"
+    }
+}
